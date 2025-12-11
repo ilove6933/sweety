@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026年台兒學術課程智慧行事曆 (翊庭專屬版 V3)</title>
+    <title>2026年台兒學術課程智慧行事曆</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -113,6 +113,12 @@
         .btn-secondary {
             background-color: #eee;
         }
+        
+        .btn-action {
+            background-color: #333;
+            color: #fff;
+            font-weight: bold;
+        }
 
         /* 主日曆容器 */
         #calendar-container {
@@ -210,7 +216,6 @@
             background-color: var(--header-bg);
             border-radius: calc(var(--border-radius) / 2);
             color: var(--text-main);
-            /* Ensure text is readable on dark header backgrounds */
             transition: all 0.3s ease;
         }
 
@@ -280,6 +285,41 @@
             font-weight: 500;
         }
 
+        /* Modal 樣式 (教學視窗) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: left;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            font-family: var(--font-main);
+            color: #333;
+        }
+        .modal-card h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .modal-card p { line-height: 1.6; margin-bottom: 15px; }
+        .modal-card ol { margin-bottom: 20px; padding-left: 20px; }
+        .modal-card li { margin-bottom: 8px; }
+        .modal-close-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 8px;
+        }
+
         /* 事件樣式 */
         .has-event { color: #fff; font-weight: bold; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }
         .evt-A { background-color: var(--color-a); }
@@ -328,15 +368,41 @@
            風格定義 (Themes)
            ========================================= */
 
-        /* --- 經典風格 --- */
+        /* --- 32. 翊庭專屬 (Yi-Ting Exclusive) - Default Active --- */
+        body.theme-yiting {
+            --bg-body: #fdf6e3; 
+            --bg-container: #fffbf0;
+            --text-main: #3e3b3b;
+            --border-color: #e5715e;
+            --border-width: 2px;
+            --border-radius: 8px;
+            --header-bg: #e5715e;
+            --month-bg: #fff;
+            --shadow: 8px 8px 0px rgba(0,0,0,0.1);
+            --font-main: "Futura", "Century Gothic", "Segoe UI", sans-serif;
+            --color-a: #e5715e; --color-b: #7ebdc2; --color-c: #a6c48a; --color-d: #f3d463; --color-e: #ba93b1;
+        }
+        /* 冬季 (1, 2, 12月) */
+        body.theme-yiting .month-card:nth-child(1), body.theme-yiting .month-card:nth-child(2), body.theme-yiting .month-card:nth-child(12) { border-color: #7ebdc2; }
+        body.theme-yiting .month-card:nth-child(1) .month-title, body.theme-yiting .month-card:nth-child(2) .month-title, body.theme-yiting .month-card:nth-child(12) .month-title { background-color: #7ebdc2; color: #fff; }
+        /* 春季 (3, 4, 5月) */
+        body.theme-yiting .month-card:nth-child(3), body.theme-yiting .month-card:nth-child(4), body.theme-yiting .month-card:nth-child(5) { border-color: #f2a3a1; }
+        body.theme-yiting .month-card:nth-child(3) .month-title, body.theme-yiting .month-card:nth-child(4) .month-title, body.theme-yiting .month-card:nth-child(5) .month-title { background-color: #f2a3a1; color: #3e3b3b; }
+        /* 夏季 (6, 7, 8月) */
+        body.theme-yiting .month-card:nth-child(6), body.theme-yiting .month-card:nth-child(7), body.theme-yiting .month-card:nth-child(8) { border-color: #f3d463; }
+        body.theme-yiting .month-card:nth-child(6) .month-title, body.theme-yiting .month-card:nth-child(7) .month-title, body.theme-yiting .month-card:nth-child(8) .month-title { background-color: #f3d463; color: #3e3b3b; }
+        /* 秋季 (9, 10, 11月) */
+        body.theme-yiting .month-card:nth-child(9), body.theme-yiting .month-card:nth-child(10), body.theme-yiting .month-card:nth-child(11) { border-color: #e5715e; }
+        body.theme-yiting .month-card:nth-child(9) .month-title, body.theme-yiting .month-card:nth-child(10) .month-title, body.theme-yiting .month-card:nth-child(11) .month-title { background-color: #e5715e; color: #fff; }
+
+        /* --- 其他風格 --- */
         body.theme-gumroad { --bg-body: #ffffff; --header-bg: #ff90e8; }
         body.theme-mario { --bg-body: #6b8cff; --bg-container: #ffccc5; --border-width: 4px; --shadow: 8px 8px 0px #000; --header-bg: #e70012; --font-main: 'Courier New', monospace; --color-a: #e70012; --color-b: #0032bf; --color-c: #00a300; --color-d: #ffce00; --color-e: #800080; }
         body.theme-acnh { --bg-body: #f3fcf0; --bg-container: #fffae6; --text-main: #5e5338; --border-color: #92d4a6; --border-width: 0px; --border-radius: 20px; --shadow: 0 4px 10px rgba(0,0,0,0.1); --header-bg: #89e0b5; --font-main: "Arial Rounded MT Bold", sans-serif; --color-a: #ff8e8e; --color-b: #64c4ed; --color-c: #95e1d3; --color-d: #fce38a; --color-e: #a7bed3; }
         body.theme-barbie { --bg-body: #ffc2d4; --bg-container: #fff0f5; --text-main: #e0218a; --border-color: #ffffff; --border-width: 4px; --border-radius: 15px; --shadow: 5px 5px 0px #e0218a; --header-bg: #ff69b4; --color-a: #ff007f; --color-b: #00bfff; --color-c: #32cd32; --color-d: #ffd700; --color-e: #9400d3; }
         body.theme-wes { --bg-body: #f5e6d3; --bg-container: #fffbf0; --text-main: #3e3b3b; --border-color: #e5715e; --border-width: 1px; --shadow: 8px 8px 0px rgba(229, 113, 94, 0.3); --header-bg: #f2a3a1; --font-main: 'Futura', sans-serif; --color-a: #e5715e; --color-b: #7ebdc2; --color-c: #a6c48a; --color-d: #f3d463; --color-e: #ba93b1; }
         body.theme-notion { --bg-body: #ffffff; --bg-container: #ffffff; --text-main: #37352f; --border-color: #e0e0e0; --border-width: 1px; --border-radius: 3px; --shadow: none; --header-bg: #f7f6f3; --month-bg: #fff; }
-
-        /* --- 季節 --- */
+        
         body.theme-spring { --bg-body: #fce4ec; --bg-container: #fff; --text-main: #558b2f; --border-color: #c5e1a5; --border-width: 2px; --header-bg: #a5d6a7; --month-bg: #fff; --font-main: "Comic Sans MS", "Chalkboard SE", sans-serif; --shadow: 5px 5px 0px #f8bbd0; --border-radius: 15px; --color-a: #f48fb1; --color-b: #81d4fa; --color-c: #a5d6a7; --color-d: #ffe082; --color-e: #ce93d8; }
         body.theme-summer { --bg-body: #fff3e0; --bg-container: #e1f5fe; --text-main: #0277bd; --border-color: #4fc3f7; --border-width: 0px; --header-bg: #ffab91; --month-bg: #ffffff; --font-main: "Arial Rounded MT Bold", sans-serif; --shadow: 0 4px 10px rgba(0,0,0,0.1); --border-radius: 20px; --color-a: #ff5722; --color-b: #29b6f6; --color-c: #66bb6a; --color-d: #ffa726; --color-e: #ab47bc; }
         body.theme-autumn { --bg-body: #efebe9; --bg-container: #d7ccc8; --text-main: #3e2723; --border-color: #8d6e63; --border-width: 1px; --header-bg: #ff7043; --month-bg: #fff3e0; --font-main: "Georgia", serif; --shadow: 4px 4px 8px rgba(62, 39, 35, 0.3); --border-radius: 4px; --color-a: #bf360c; --color-b: #5d4037; --color-c: #689f38; --color-d: #ff6f00; --color-e: #8d6e63; }
@@ -345,7 +411,6 @@
         body.theme-christmas { --bg-body: #b01b2e; --bg-container: #fff; --text-main: #165b33; --border-color: #d4af37; --border-width: 3px; --header-bg: #165b33; --month-bg: #f8f9fa; --font-main: "Georgia", serif; --shadow: 6px 6px 0px #d4af37; --color-a: #cc231e; --color-b: #348e36; --color-c: #0f8a5f; --color-d: #d4af37; --color-e: #990000; }
         body.theme-christmas .month-title { color: #fff; background-color: #165b33; }
 
-        /* --- 科技/藝術 --- */
         body.theme-cyberpunk { --bg-body: #050505; --bg-container: #121212; --text-main: #fcee0a; --border-color: #00ff41; --border-width: 2px; --shadow: 0 0 10px #00ff41; --header-bg: #333; --month-bg: #000; --font-main: 'Courier New', monospace; --color-a: #ff0055; --color-b: #00e5ff; --color-c: #00ff41; --color-d: #fcee0a; --color-e: #9d00ff; }
         body.theme-matrix { --bg-body: #000; --bg-container: #000; --text-main: #0f0; --border-color: #003300; --border-width: 1px; --shadow: inset 0 0 20px #003300; --header-bg: #001100; --month-bg: #000; --font-main: monospace; --color-a: #ccffcc; --color-b: #99ff99; --color-c: #66ff66; --color-d: #33ff33; --color-e: #00ff00; }
         body.theme-terminal { --bg-body: #000; --bg-container: #1e1e1e; --text-main: #fff; --border-color: #fff; --border-width: 1px; --header-bg: #333; --month-bg: #000; --font-main: 'Courier New', monospace; --shadow: none; }
@@ -359,14 +424,12 @@
         body.theme-retro { --bg-body: #008080; --bg-container: #c0c0c0; --text-main: #000; --border-color: #dfdfdf; --border-width: 3px; --border-radius: 0; --header-bg: #000080; --month-bg: #fff; --shadow: 2px 2px 0px #000; }
         body.theme-retro .month-title { color: white; }
         
-        /* --- 柔和 --- */
         body.theme-pastel { --bg-body: #fff5f5; --bg-container: #fff; --text-main: #666; --border-color: #ffd1dc; --border-width: 2px; --border-radius: 12px; --header-bg: #b5eadd; --shadow: 5px 5px 0 #ffd1dc; }
         body.theme-forest { --bg-body: #2c4c3b; --bg-container: #e9f5db; --text-main: #1a2f23; --border-color: #87a37e; --border-width: 1px; --header-bg: #cfe1b9; --month-bg: #f4f9ef; --font-main: Georgia, serif; }
         body.theme-ocean { --bg-body: #e0f7fa; --bg-container: #b2ebf2; --text-main: #006064; --border-color: #4dd0e1; --header-bg: #00bcd4; --month-bg: #fff; --shadow: 0 4px 6px rgba(0,100,200,0.2); }
         body.theme-sunset { background: linear-gradient(to bottom, #ff9a9e 0%, #fecfef 100%); --bg-container: rgba(255,255,255,0.8); --border-width: 0; --header-bg: #ff6f61; --border-radius: 15px; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
         body.theme-lavender { --bg-body: #e6e6fa; --bg-container: #fff; --text-main: #4b0082; --border-color: #9370db; --header-bg: #e6e6fa; --shadow: 4px 4px 12px rgba(147, 112, 219, 0.3); }
 
-        /* --- 特色 --- */
         body.theme-synthwave { --bg-body: #2b213a; --bg-container: #241b35; --text-main: #ff71ce; --border-color: #01cdfe; --border-width: 2px; --header-bg: #b967ff; --month-bg: #191226; --shadow: 0 0 10px #05ffa1, 0 0 20px #b967ff; --font-main: "Arial Black", sans-serif; --color-a: #ff71ce; --color-b: #01cdfe; --color-c: #05ffa1; --color-d: #b967ff; --color-e: #fffb96; }
         body.theme-gameboy { --bg-body: #8bac0f; --bg-container: #9bbc0f; --text-main: #0f380f; --border-color: #306230; --border-width: 3px; --header-bg: #8bac0f; --month-bg: #9bbc0f; --shadow: 5px 5px 0px #0f380f; --font-main: "Courier New", monospace; --border-radius: 5px; --color-a: #306230; --color-b: #306230; --color-c: #306230; --color-d: #0f380f; --color-e: #0f380f; }
         body.theme-gameboy .evt-A, body.theme-gameboy .evt-B { opacity: 0.6; }
@@ -417,72 +480,9 @@
             margin-top: 5px;
         }
 
-        /* --- 32. 翊庭專屬 (Yi-Ting Exclusive) --- */
-        body.theme-yiting {
-            --bg-body: #fdf6e3; /* Creamy Wes Anderson */
-            --bg-container: #fffbf0;
-            --text-main: #3e3b3b;
-            --border-color: #e5715e;
-            --border-width: 2px;
-            --border-radius: 8px;
-            --header-bg: #e5715e; /* Default, will be overridden */
-            --month-bg: #fff;
-            --shadow: 8px 8px 0px rgba(0,0,0,0.1);
-            --font-main: "Futura", "Century Gothic", "Segoe UI", sans-serif;
-            --color-a: #e5715e; --color-b: #7ebdc2; --color-c: #a6c48a; --color-d: #f3d463; --color-e: #ba93b1;
-        }
-        /* 冬季 (1, 2, 12月) - Life Aquatic Blue */
-        body.theme-yiting .month-card:nth-child(1),
-        body.theme-yiting .month-card:nth-child(2),
-        body.theme-yiting .month-card:nth-child(12) {
-            border-color: #7ebdc2;
-        }
-        body.theme-yiting .month-card:nth-child(1) .month-title,
-        body.theme-yiting .month-card:nth-child(2) .month-title,
-        body.theme-yiting .month-card:nth-child(12) .month-title {
-            background-color: #7ebdc2; /* Blue */
-            color: #fff;
-        }
-        /* 春季 (3, 4, 5月) - Grand Budapest Pink */
-        body.theme-yiting .month-card:nth-child(3),
-        body.theme-yiting .month-card:nth-child(4),
-        body.theme-yiting .month-card:nth-child(5) {
-            border-color: #f2a3a1;
-        }
-        body.theme-yiting .month-card:nth-child(3) .month-title,
-        body.theme-yiting .month-card:nth-child(4) .month-title,
-        body.theme-yiting .month-card:nth-child(5) .month-title {
-            background-color: #f2a3a1; /* Pink */
-            color: #3e3b3b;
-        }
-        /* 夏季 (6, 7, 8月) - Moonrise Kingdom Yellow */
-        body.theme-yiting .month-card:nth-child(6),
-        body.theme-yiting .month-card:nth-child(7),
-        body.theme-yiting .month-card:nth-child(8) {
-            border-color: #f3d463;
-        }
-        body.theme-yiting .month-card:nth-child(6) .month-title,
-        body.theme-yiting .month-card:nth-child(7) .month-title,
-        body.theme-yiting .month-card:nth-child(8) .month-title {
-            background-color: #f3d463; /* Yellow */
-            color: #3e3b3b;
-        }
-        /* 秋季 (9, 10, 11月) - Fantastic Mr. Fox Orange/Brown */
-        body.theme-yiting .month-card:nth-child(9),
-        body.theme-yiting .month-card:nth-child(10),
-        body.theme-yiting .month-card:nth-child(11) {
-            border-color: #e5715e;
-        }
-        body.theme-yiting .month-card:nth-child(9) .month-title,
-        body.theme-yiting .month-card:nth-child(10) .month-title,
-        body.theme-yiting .month-card:nth-child(11) .month-title {
-            background-color: #e5715e; /* Orange */
-            color: #fff;
-        }
-
     </style>
 </head>
-<body class="theme-gumroad">
+<body class="theme-yiting">
 
 <div class="controls-area" data-html2canvas-ignore="true">
     <div class="controls">
@@ -539,7 +539,8 @@
             <button class="btn-secondary" onclick="toggleView()" id="view-toggle-btn">📋 切換列表模式</button>
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="btn-secondary" onclick="exportICS()">📅 匯出行事曆 (含 TimeTree)</button>
+            <button class="btn-action" onclick="copySchedule()">📋 複製文字</button>
+            <button class="btn-secondary" onclick="exportICS()">📅 匯出手機行事曆</button>
             <button class="btn-primary" onclick="downloadPDF()">📥 下載 PDF</button>
         </div>
     </div>
@@ -579,6 +580,23 @@
 </div>
 
 <div id="pdf-ghost-wrapper"></div>
+
+<!-- Export Instruction Modal -->
+<div class="modal-overlay" id="export-modal" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <h2>📅 如何匯入 TimeTree？</h2>
+        <p>TimeTree 無法直接上傳檔案，它是透過<strong>同步手機行事曆</strong>來運作的。</p>
+        <ol>
+            <li>點擊確認後，會下載一個 <code>.ics</code> 檔案。</li>
+            <li>開啟該檔案，並選擇<strong>「加入所有行程」</strong>至您的手機行事曆（iOS 行事曆或 Google 日曆）。</li>
+            <li>打開 TimeTree App，進入「設定」→「行事曆」，開啟該行事曆的同步功能。</li>
+        </ol>
+        <p style="font-size:0.9rem; color:#666; background:#f5f5f5; padding:8px; border-radius:5px;">
+            💡 <strong>小撇步：</strong>如果您只想把行程貼到 TimeTree 備忘錄或 LINE 群組，請使用畫面上的<strong>「📋 複製文字」</strong>按鈕。
+        </p>
+        <button class="btn-primary modal-close-btn" onclick="confirmExport()">我瞭解了，下載檔案</button>
+    </div>
+</div>
 
 <script>
     const year = 2026;
@@ -763,11 +781,39 @@
         document.body.className = `theme-${themeName}`;
     }
 
-    // --- ICS Export ---
-    function exportICS() {
-        // Show TimeTree Help
-        alert("【TimeTree 匯入教學】\n\n1. 點擊「確定」後會下載一個 .ics 檔案。\n2. 請在手機上打開該檔案。\n3. 選擇「加入到行事曆」(iPhone/Google Calendar)。\n4. 打開 TimeTree App，在設定中開啟「匯入/同步 OS 行事曆」即可！");
+    // --- Copy Text Function ---
+    function copySchedule() {
+        let textToCopy = "【2026年台兒學術課程】\n";
+        flatEvents.forEach(evt => {
+            if (!activeFilters.has(evt.type)) return;
+            // Get weekday
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            const w = weekDays[evt.objDate.getDay()];
+            textToCopy += `${evt.dateStr.replace('-', '/')} (${w}) ${evt.title}\n`;
+        });
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            alert("已複製到剪貼簿！\n您可以直接貼上到 LINE 或 TimeTree 備忘錄。");
+        }).catch(err => {
+            console.error('複製失敗:', err);
+        });
+    }
 
+    // --- ICS Export Logic with Modal ---
+    function exportICS() {
+        // Show the instruction modal instead of alert
+        document.getElementById('export-modal').style.display = 'flex';
+    }
+
+    function closeModal(e) {
+        if(e.target.id === 'export-modal') {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+    }
+
+    function confirmExport() {
+        document.getElementById('export-modal').style.display = 'none';
+        
         let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Taier//Course Calendar//TW\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
         
         flatEvents.forEach(evt => {
