@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026年台兒學術課程智慧行事曆 (翊庭專屬版 V3)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* --- 核心變數與預設 (Gumroad) --- */
+        :root {
+            --bg-body: #ffffff;
+            --bg-container: #ffffff;
+            --text-main: #000000;
+            --border-color: #000000;
+            --border-width: 2px;
+            --border-radius: 0px;
+            --shadow: 5px 5px 0px #000000;
+            --header-bg: #ff90e8;
+            --month-bg: #ffffff;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            
+            /* 課程顏色 (預設) */
+            --color-a: #ff6b6b; 
+            --color-b: #4dabf7; 
+            --color-c: #51cf66; 
+            --color-d: #fcc419; 
+            --color-e: #cc5de8; 
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        /* 控制面板區塊 */
+        .controls-area {
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .controls {
+            padding: 15px;
+            background: var(--bg-container);
+            border: var(--border-width) solid var(--border-color);
+            box-shadow: var(--shadow);
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* 篩選器樣式 */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .filter-btn {
+            padding: 5px 12px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0.6;
+            transition: all 0.2s;
+            background: #fff;
+            color: #333;
+        }
+        
+        .filter-btn.active {
+            opacity: 1;
+            border-color: #000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: #fff;
+            color: #000;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--header-bg);
+            font-weight: bold;
+        }
+        
+        .btn-secondary {
+            background-color: #eee;
+        }
+
+        /* 主日曆容器 */
+        #calendar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--bg-container);
+            padding: 30px;
+            border: var(--border-width) solid transparent;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: var(--shadow); 
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            text-transform: uppercase;
+            border-bottom: var(--border-width) solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        /* 下一個活動提示 */
+        .next-event-banner {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+            font-size: 1rem;
+            border: 1px dashed rgba(0,0,0,0.2);
+        }
+        .next-event-highlight {
+            font-weight: bold;
+            color: var(--text-main);
+            font-size: 1.1em;
+            background-color: var(--header-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* 圖例 */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* 視圖切換 */
+        .view-section { display: none; }
+        .view-section.active { display: grid; }
+        
+        /* 1. Grid View */
+        .year-grid {
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px;
+        }
+
+        .month-card {
+            background: var(--month-bg);
+            border: var(--border-width) solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            box-shadow: var(--shadow);
+            transition: opacity 0.3s;
+        }
+
+        .month-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: var(--header-bg);
+            border-radius: calc(var(--border-radius) / 2);
+            color: var(--text-main);
+            /* Ensure text is readable on dark header backgrounds */
+            transition: all 0.3s ease;
+        }
+
+        .days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            border-radius: 50%;
+            cursor: default;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .day-cell.dimmed {
+            opacity: 0.2;
+        }
+
+        /* 2. List View (Agenda) */
+        .list-view {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .list-view.active { display: grid; }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--month-bg);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 15px;
+        }
+        .list-date {
+            font-weight: bold;
+            min-width: 80px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        .list-tag {
+            padding: 3px 8px;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .list-title {
+            font-weight: 500;
+        }
+
+        /* 事件樣式 */
+        .has-event { color: #fff; font-weight: bold; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }
+        .evt-A { background-color: var(--color-a); }
+        .evt-B { background-color: var(--color-b); }
+        .evt-C { background-color: var(--color-c); }
+        .evt-D { background-color: var(--color-d); }
+        .evt-E { background-color: var(--color-e); }
+
+        /* RWD */
+        @media (max-width: 900px) {
+            .year-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .year-grid { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; align-items: stretch; }
+            h1 { font-size: 1.5rem; }
+            #calendar-container { padding: 15px; }
+            .list-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+        }
+
+        /* Ghost PDF Wrapper */
+        #pdf-ghost-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 0; overflow: hidden; z-index: -999;
+        }
+        .ghost-content {
+            width: 1200px !important; 
+            padding: 40px !important; 
+            background-color: var(--bg-container);
+            transform: none !important;
+            border: none !important; 
+        }
+        .ghost-content .year-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 25px !important;
+        }
+        .ghost-content .list-view, .ghost-content .controls-area, .ghost-content .next-event-banner {
+            display: none !important;
+        }
+        .ghost-content .legend {
+            display: flex !important;
+        }
+
+        /* =========================================
+           風格定義 (Themes)
+           ========================================= */
+
+        /* --- 經典風格 --- */
+        body.theme-gumroad { --bg-body: #ffffff; --header-bg: #ff90e8; }
+        body.theme-mario { --bg-body: #6b8cff; --bg-container: #ffccc5; --border-width: 4px; --shadow: 8px 8px 0px #000; --header-bg: #e70012; --font-main: 'Courier New', monospace; --color-a: #e70012; --color-b: #0032bf; --color-c: #00a300; --color-d: #ffce00; --color-e: #800080; }
+        body.theme-acnh { --bg-body: #f3fcf0; --bg-container: #fffae6; --text-main: #5e5338; --border-color: #92d4a6; --border-width: 0px; --border-radius: 20px; --shadow: 0 4px 10px rgba(0,0,0,0.1); --header-bg: #89e0b5; --font-main: "Arial Rounded MT Bold", sans-serif; --color-a: #ff8e8e; --color-b: #64c4ed; --color-c: #95e1d3; --color-d: #fce38a; --color-e: #a7bed3; }
+        body.theme-barbie { --bg-body: #ffc2d4; --bg-container: #fff0f5; --text-main: #e0218a; --border-color: #ffffff; --border-width: 4px; --border-radius: 15px; --shadow: 5px 5px 0px #e0218a; --header-bg: #ff69b4; --color-a: #ff007f; --color-b: #00bfff; --color-c: #32cd32; --color-d: #ffd700; --color-e: #9400d3; }
+        body.theme-wes { --bg-body: #f5e6d3; --bg-container: #fffbf0; --text-main: #3e3b3b; --border-color: #e5715e; --border-width: 1px; --shadow: 8px 8px 0px rgba(229, 113, 94, 0.3); --header-bg: #f2a3a1; --font-main: 'Futura', sans-serif; --color-a: #e5715e; --color-b: #7ebdc2; --color-c: #a6c48a; --color-d: #f3d463; --color-e: #ba93b1; }
+        body.theme-notion { --bg-body: #ffffff; --bg-container: #ffffff; --text-main: #37352f; --border-color: #e0e0e0; --border-width: 1px; --border-radius: 3px; --shadow: none; --header-bg: #f7f6f3; --month-bg: #fff; }
+
+        /* --- 季節 --- */
+        body.theme-spring { --bg-body: #fce4ec; --bg-container: #fff; --text-main: #558b2f; --border-color: #c5e1a5; --border-width: 2px; --header-bg: #a5d6a7; --month-bg: #fff; --font-main: "Comic Sans MS", "Chalkboard SE", sans-serif; --shadow: 5px 5px 0px #f8bbd0; --border-radius: 15px; --color-a: #f48fb1; --color-b: #81d4fa; --color-c: #a5d6a7; --color-d: #ffe082; --color-e: #ce93d8; }
+        body.theme-summer { --bg-body: #fff3e0; --bg-container: #e1f5fe; --text-main: #0277bd; --border-color: #4fc3f7; --border-width: 0px; --header-bg: #ffab91; --month-bg: #ffffff; --font-main: "Arial Rounded MT Bold", sans-serif; --shadow: 0 4px 10px rgba(0,0,0,0.1); --border-radius: 20px; --color-a: #ff5722; --color-b: #29b6f6; --color-c: #66bb6a; --color-d: #ffa726; --color-e: #ab47bc; }
+        body.theme-autumn { --bg-body: #efebe9; --bg-container: #d7ccc8; --text-main: #3e2723; --border-color: #8d6e63; --border-width: 1px; --header-bg: #ff7043; --month-bg: #fff3e0; --font-main: "Georgia", serif; --shadow: 4px 4px 8px rgba(62, 39, 35, 0.3); --border-radius: 4px; --color-a: #bf360c; --color-b: #5d4037; --color-c: #689f38; --color-d: #ff6f00; --color-e: #8d6e63; }
+        body.theme-winter { --bg-body: #e1f5fe; --bg-container: #ffffff; --text-main: #455a64; --border-color: #b3e5fc; --border-width: 1px; --header-bg: #81d4fa; --month-bg: #f5f5f5; --font-main: sans-serif; --shadow: 0 0 10px #b2ebf2; --border-radius: 10px; --color-a: #ff8a80; --color-b: #80d8ff; --color-c: #a7ffeb; --color-d: #ffff8d; --color-e: #ea80fc; }
+        body.theme-winter .month-title { color: #fff; background-color: #29b6f6; }
+        body.theme-christmas { --bg-body: #b01b2e; --bg-container: #fff; --text-main: #165b33; --border-color: #d4af37; --border-width: 3px; --header-bg: #165b33; --month-bg: #f8f9fa; --font-main: "Georgia", serif; --shadow: 6px 6px 0px #d4af37; --color-a: #cc231e; --color-b: #348e36; --color-c: #0f8a5f; --color-d: #d4af37; --color-e: #990000; }
+        body.theme-christmas .month-title { color: #fff; background-color: #165b33; }
+
+        /* --- 科技/藝術 --- */
+        body.theme-cyberpunk { --bg-body: #050505; --bg-container: #121212; --text-main: #fcee0a; --border-color: #00ff41; --border-width: 2px; --shadow: 0 0 10px #00ff41; --header-bg: #333; --month-bg: #000; --font-main: 'Courier New', monospace; --color-a: #ff0055; --color-b: #00e5ff; --color-c: #00ff41; --color-d: #fcee0a; --color-e: #9d00ff; }
+        body.theme-matrix { --bg-body: #000; --bg-container: #000; --text-main: #0f0; --border-color: #003300; --border-width: 1px; --shadow: inset 0 0 20px #003300; --header-bg: #001100; --month-bg: #000; --font-main: monospace; --color-a: #ccffcc; --color-b: #99ff99; --color-c: #66ff66; --color-d: #33ff33; --color-e: #00ff00; }
+        body.theme-terminal { --bg-body: #000; --bg-container: #1e1e1e; --text-main: #fff; --border-color: #fff; --border-width: 1px; --header-bg: #333; --month-bg: #000; --font-main: 'Courier New', monospace; --shadow: none; }
+        body.theme-neumorphism { --bg-body: #e0e5ec; --bg-container: #e0e5ec; --text-main: #4d5b7c; --border-color: transparent; --border-width: 0; --border-radius: 20px; --shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5); --header-bg: #e0e5ec; --month-bg: #e0e5ec; }
+        body.theme-glass { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); --bg-container: rgba(255, 255, 255, 0.25); --text-main: #fff; --border-color: rgba(255, 255, 255, 0.3); --border-width: 1px; --border-radius: 16px; --shadow: 0 4px 30px rgba(0, 0, 0, 0.1); --header-bg: rgba(255, 255, 255, 0.2); --month-bg: rgba(255, 255, 255, 0.1); }
+        body.theme-dark { --bg-body: #181818; --bg-container: #222; --text-main: #eee; --border-color: #444; --border-width: 1px; --shadow: 0 4px 10px rgba(0,0,0,0.5); --header-bg: #333; --month-bg: #2a2a2a; }
+        body.theme-monokai { --bg-body: #272822; --bg-container: #272822; --text-main: #f8f8f2; --border-color: #75715e; --border-width: 1px; --header-bg: #3e3d32; --month-bg: #272822; --font-main: "Monaco", monospace; --shadow: none; --color-a: #f92672; --color-b: #66d9ef; --color-c: #a6e22e; --color-d: #e6db74; --color-e: #ae81ff; }
+        body.theme-bauhaus { --bg-body: #f0f0f0; --bg-container: #ffffff; --border-width: 3px; --border-radius: 0; --shadow: 8px 8px 0px #111; --header-bg: #d42a20; --color-a: #d42a20; --color-b: #1d4e89; --color-c: #fdb913; --color-d: #111; --color-e: #888; }
+        body.theme-brutalism { --bg-body: #fff; --bg-container: #ffff00; --text-main: #000; --border-color: #000; --border-width: 5px; --border-radius: 0; --shadow: 15px 15px 0 #000; --header-bg: #fff; --font-main: Impact, sans-serif; }
+        body.theme-blueprint { --bg-body: #1b4985; --bg-container: #1b4985; --text-main: #fff; --border-color: rgba(255,255,255,0.5); --border-width: 1px; --header-bg: #153a6b; --month-bg: transparent; --shadow: none; background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; }
+        body.theme-retro { --bg-body: #008080; --bg-container: #c0c0c0; --text-main: #000; --border-color: #dfdfdf; --border-width: 3px; --border-radius: 0; --header-bg: #000080; --month-bg: #fff; --shadow: 2px 2px 0px #000; }
+        body.theme-retro .month-title { color: white; }
+        
+        /* --- 柔和 --- */
+        body.theme-pastel { --bg-body: #fff5f5; --bg-container: #fff; --text-main: #666; --border-color: #ffd1dc; --border-width: 2px; --border-radius: 12px; --header-bg: #b5eadd; --shadow: 5px 5px 0 #ffd1dc; }
+        body.theme-forest { --bg-body: #2c4c3b; --bg-container: #e9f5db; --text-main: #1a2f23; --border-color: #87a37e; --border-width: 1px; --header-bg: #cfe1b9; --month-bg: #f4f9ef; --font-main: Georgia, serif; }
+        body.theme-ocean { --bg-body: #e0f7fa; --bg-container: #b2ebf2; --text-main: #006064; --border-color: #4dd0e1; --header-bg: #00bcd4; --month-bg: #fff; --shadow: 0 4px 6px rgba(0,100,200,0.2); }
+        body.theme-sunset { background: linear-gradient(to bottom, #ff9a9e 0%, #fecfef 100%); --bg-container: rgba(255,255,255,0.8); --border-width: 0; --header-bg: #ff6f61; --border-radius: 15px; --shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        body.theme-lavender { --bg-body: #e6e6fa; --bg-container: #fff; --text-main: #4b0082; --border-color: #9370db; --header-bg: #e6e6fa; --shadow: 4px 4px 12px rgba(147, 112, 219, 0.3); }
+
+        /* --- 特色 --- */
+        body.theme-synthwave { --bg-body: #2b213a; --bg-container: #241b35; --text-main: #ff71ce; --border-color: #01cdfe; --border-width: 2px; --header-bg: #b967ff; --month-bg: #191226; --shadow: 0 0 10px #05ffa1, 0 0 20px #b967ff; --font-main: "Arial Black", sans-serif; --color-a: #ff71ce; --color-b: #01cdfe; --color-c: #05ffa1; --color-d: #b967ff; --color-e: #fffb96; }
+        body.theme-gameboy { --bg-body: #8bac0f; --bg-container: #9bbc0f; --text-main: #0f380f; --border-color: #306230; --border-width: 3px; --header-bg: #8bac0f; --month-bg: #9bbc0f; --shadow: 5px 5px 0px #0f380f; --font-main: "Courier New", monospace; --border-radius: 5px; --color-a: #306230; --color-b: #306230; --color-c: #306230; --color-d: #0f380f; --color-e: #0f380f; }
+        body.theme-gameboy .evt-A, body.theme-gameboy .evt-B { opacity: 0.6; }
+        body.theme-gameboy .evt-C, body.theme-gameboy .evt-D { opacity: 0.8; }
+        body.theme-gameboy .evt-E { opacity: 1.0; }
+        body.theme-newspaper { --bg-body: #f9f7f1; --bg-container: #f9f7f1; --text-main: #222; --border-color: #222; --border-width: 1px; --header-bg: #e3e1db; --month-bg: #fff; --shadow: 8px 8px 0px rgba(0,0,0,0.1); --font-main: "Times New Roman", Times, serif; --border-radius: 0; --color-a: #b7410e; --color-b: #3b5998; --color-c: #5c7a29; --color-d: #d4a017; --color-e: #6a0dad; }
+        body.theme-luxury { --bg-body: #000; --bg-container: #111; --text-main: #d4af37; --border-color: #d4af37; --border-width: 1px; --header-bg: #1a1a1a; --month-bg: #0a0a0a; --shadow: 0 0 15px rgba(212, 175, 55, 0.3); --font-main: "Georgia", serif; --border-radius: 4px; --color-a: #ff4d4d; --color-b: #4da6ff; --color-c: #4dff88; --color-d: #ffd700; --color-e: #bf80ff; }
+
+        /* --- 31. Senior (老人直觀 - 修正版) --- */
+        body.theme-senior {
+            --bg-body: #f0f0f0;
+            --bg-container: #ffffff;
+            --text-main: #000000;
+            --border-color: #000000;
+            --border-width: 4px;
+            --border-radius: 8px;
+            --header-bg: #000000;
+            --month-bg: #ffffff;
+            --font-main: "Arial", "Heiti TC", sans-serif;
+            --shadow: none;
+            /* High Contrast Colors */
+            --color-a: #cc0000; 
+            --color-b: #0044cc; 
+            --color-c: #008800; 
+            --color-d: #eeaa00; 
+            --color-e: #6600cc;
+        }
+        body.theme-senior h1 { font-size: 2.5rem; letter-spacing: 2px; }
+        body.theme-senior .month-title { color: #fff; font-size: 1.5rem; padding: 10px; }
+        body.theme-senior .days-header { font-size: 1.2rem; color: #000; opacity: 1; margin-bottom: 10px; }
+        body.theme-senior .day-cell { font-size: 1.3rem; font-weight: bold; border: 1px solid #ddd; border-radius: 4px; margin: 1px; aspect-ratio: auto; height: 50px; }
+        body.theme-senior .legend { font-size: 1.3rem; }
+        body.theme-senior .dot { width: 20px; height: 20px; border: 2px solid #000; }
+        body.theme-senior .has-event { border: 3px solid #000; color: #fff; }
+        /* 修正：老人直觀的 Banner 強制高對比 */
+        body.theme-senior .next-event-banner {
+            background-color: #000;
+            color: #fff;
+            border: 4px solid #000;
+        }
+        body.theme-senior .next-event-highlight {
+            background-color: #ffeb3b; /* 黃底 */
+            color: #000; /* 黑字 */
+            padding: 2px 10px;
+            border-radius: 0;
+            font-size: 1.3rem;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        /* --- 32. 翊庭專屬 (Yi-Ting Exclusive) --- */
+        body.theme-yiting {
+            --bg-body: #fdf6e3; /* Creamy Wes Anderson */
+            --bg-container: #fffbf0;
+            --text-main: #3e3b3b;
+            --border-color: #e5715e;
+            --border-width: 2px;
+            --border-radius: 8px;
+            --header-bg: #e5715e; /* Default, will be overridden */
+            --month-bg: #fff;
+            --shadow: 8px 8px 0px rgba(0,0,0,0.1);
+            --font-main: "Futura", "Century Gothic", "Segoe UI", sans-serif;
+            --color-a: #e5715e; --color-b: #7ebdc2; --color-c: #a6c48a; --color-d: #f3d463; --color-e: #ba93b1;
+        }
+        /* 冬季 (1, 2, 12月) - Life Aquatic Blue */
+        body.theme-yiting .month-card:nth-child(1),
+        body.theme-yiting .month-card:nth-child(2),
+        body.theme-yiting .month-card:nth-child(12) {
+            border-color: #7ebdc2;
+        }
+        body.theme-yiting .month-card:nth-child(1) .month-title,
+        body.theme-yiting .month-card:nth-child(2) .month-title,
+        body.theme-yiting .month-card:nth-child(12) .month-title {
+            background-color: #7ebdc2; /* Blue */
+            color: #fff;
+        }
+        /* 春季 (3, 4, 5月) - Grand Budapest Pink */
+        body.theme-yiting .month-card:nth-child(3),
+        body.theme-yiting .month-card:nth-child(4),
+        body.theme-yiting .month-card:nth-child(5) {
+            border-color: #f2a3a1;
+        }
+        body.theme-yiting .month-card:nth-child(3) .month-title,
+        body.theme-yiting .month-card:nth-child(4) .month-title,
+        body.theme-yiting .month-card:nth-child(5) .month-title {
+            background-color: #f2a3a1; /* Pink */
+            color: #3e3b3b;
+        }
+        /* 夏季 (6, 7, 8月) - Moonrise Kingdom Yellow */
+        body.theme-yiting .month-card:nth-child(6),
+        body.theme-yiting .month-card:nth-child(7),
+        body.theme-yiting .month-card:nth-child(8) {
+            border-color: #f3d463;
+        }
+        body.theme-yiting .month-card:nth-child(6) .month-title,
+        body.theme-yiting .month-card:nth-child(7) .month-title,
+        body.theme-yiting .month-card:nth-child(8) .month-title {
+            background-color: #f3d463; /* Yellow */
+            color: #3e3b3b;
+        }
+        /* 秋季 (9, 10, 11月) - Fantastic Mr. Fox Orange/Brown */
+        body.theme-yiting .month-card:nth-child(9),
+        body.theme-yiting .month-card:nth-child(10),
+        body.theme-yiting .month-card:nth-child(11) {
+            border-color: #e5715e;
+        }
+        body.theme-yiting .month-card:nth-child(9) .month-title,
+        body.theme-yiting .month-card:nth-child(10) .month-title,
+        body.theme-yiting .month-card:nth-child(11) .month-title {
+            background-color: #e5715e; /* Orange */
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body class="theme-gumroad">
+
+<div class="controls-area" data-html2canvas-ignore="true">
+    <div class="controls">
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select id="theme-select" onchange="changeTheme(this.value)">
+                <option value="yiting" style="font-weight:bold; color:#e5715e;">✨ 翊庭專屬</option>
+                <optgroup label="友善設計">
+                    <option value="senior">👓 老人直觀</option>
+                </optgroup>
+                <optgroup label="經典風格">
+                    <option value="gumroad">Gumroad (預設)</option>
+                    <option value="mario">超級瑪利歐 (8-bit)</option>
+                    <option value="acnh">動物森友會</option>
+                    <option value="barbie">芭比粉紅</option>
+                    <option value="wes">Wes Anderson</option>
+                    <option value="notion">Notion 簡約</option>
+                </optgroup>
+                <optgroup label="季節氛圍">
+                    <option value="spring">🌸 春天 (Spring)</option>
+                    <option value="summer">☀️ 夏天 (Summer)</option>
+                    <option value="autumn">🍁 秋天 (Autumn)</option>
+                    <option value="winter">❄️ 冬天 (Winter)</option>
+                    <option value="christmas">🎄 聖誕節 (Christmas)</option>
+                </optgroup>
+                <optgroup label="科技與未來">
+                    <option value="cyberpunk">Cyberpunk 2077</option>
+                    <option value="matrix">駭客任務</option>
+                    <option value="terminal">終端機</option>
+                    <option value="neumorphism">新擬態</option>
+                    <option value="glass">玻璃擬態</option>
+                    <option value="dark">暗黑模式</option>
+                    <option value="monokai">工程師 Monokai</option>
+                </optgroup>
+                <optgroup label="藝術與設計">
+                    <option value="bauhaus">包浩斯主義</option>
+                    <option value="brutalism">粗獷主義</option>
+                    <option value="blueprint">工程藍圖</option>
+                    <option value="retro">Windows 95</option>
+                </optgroup>
+                <optgroup label="自然與柔和">
+                    <option value="pastel">粉彩柔和</option>
+                    <option value="forest">森林系</option>
+                    <option value="ocean">海洋系</option>
+                    <option value="sunset">日落漸層</option>
+                    <option value="lavender">薰衣草紫</option>
+                </optgroup>
+                <optgroup label="特色風格">
+                    <option value="synthwave">Synthwave (復古科幻)</option>
+                    <option value="gameboy">Gameboy (懷舊掌機)</option>
+                    <option value="newspaper">Newspaper (老報紙)</option>
+                    <option value="luxury">Luxury (黑金奢華)</option>
+                </optgroup>
+            </select>
+            <button class="btn-secondary" onclick="toggleView()" id="view-toggle-btn">📋 切換列表模式</button>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-secondary" onclick="exportICS()">📅 匯出行事曆 (含 TimeTree)</button>
+            <button class="btn-primary" onclick="downloadPDF()">📥 下載 PDF</button>
+        </div>
+    </div>
+    
+    <!-- 篩選器 -->
+    <div class="filters">
+        <div class="filter-btn active" onclick="toggleFilter('A')" style="border-left: 5px solid var(--color-a)">A: 胎兒心臟病</div>
+        <div class="filter-btn active" onclick="toggleFilter('B')" style="border-left: 5px solid var(--color-b)">B: 胎兒治療</div>
+        <div class="filter-btn active" onclick="toggleFilter('C')" style="border-left: 5px solid var(--color-c)">C: 影像學</div>
+        <div class="filter-btn active" onclick="toggleFilter('D')" style="border-left: 5px solid var(--color-d)">D: 川瀧塾</div>
+        <div class="filter-btn active" onclick="toggleFilter('E')" style="border-left: 5px solid var(--color-e)">E: 遺傳諮詢</div>
+    </div>
+</div>
+
+<div id="calendar-container">
+    <h1>2026年台兒學術課程</h1>
+    
+    <!-- 靜態圖例 (PDF會抓取這個部分) -->
+    <div class="legend">
+        <div class="legend-item"><div class="dot evt-A"></div> A: 胎兒心臟病季會</div>
+        <div class="legend-item"><div class="dot evt-B"></div> B: 胎兒治療</div>
+        <div class="legend-item"><div class="dot evt-C"></div> C: 北區胎兒影像學季會</div>
+        <div class="legend-item"><div class="dot evt-D"></div> D: 川瀧塾</div>
+        <div class="legend-item"><div class="dot evt-E"></div> E: 遺傳諮詢課程</div>
+    </div>
+
+    <!-- 自動倒數提示 -->
+    <div class="next-event-banner" id="next-event-display">
+        載入中...
+    </div>
+
+    <!-- 1. 網格視圖 (預設) -->
+    <div class="year-grid view-section active" id="calendar-grid"></div>
+
+    <!-- 2. 列表視圖 -->
+    <div class="list-view view-section" id="agenda-list"></div>
+</div>
+
+<div id="pdf-ghost-wrapper"></div>
+
+<script>
+    const year = 2026;
+    const eventsData = [
+        { dates: ['01-23', '04-17', '07-17', '10-16'], type: 'A', title: '胎兒心臟病季會' },
+        { dates: ['02-10', '05-12', '08-11', '12-15'], type: 'B', title: '胎兒治療' },
+        { dates: ['03-05', '06-04', '09-03', '12-03'], type: 'C', title: '北區胎兒影像學季會' },
+        { dates: [
+            // 川瀧塾 - 已更新
+            '01-08', '01-22', '02-12', '02-26', '03-12', '03-26', 
+            '04-09', '04-23', '05-07', '05-21', '06-11', '06-25', 
+            '07-09', '07-30', // 7/23 -> 7/30
+            '08-13',          // 8/06 -> 8/13
+            '08-27',          // 8/20 -> 8/27
+            '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-10', '12-24'
+        ], type: 'D', title: '川瀧塾' },
+        { dates: ['01-28', '02-25', '03-25', '04-29', '05-27', '06-24', '07-29', '08-26', '09-30', '10-28', '11-25', '12-30'], type: 'E', title: '遺傳諮詢課程' }
+    ];
+
+    // 建立事件映射 & 平面化清單
+    const eventMap = {};
+    const flatEvents = [];
+    
+    eventsData.forEach(group => {
+        group.dates.forEach(dateStr => {
+            const parts = dateStr.split('-');
+            const m = parseInt(parts[0], 10) - 1; // 0-indexed month
+            const d = parseInt(parts[1], 10);
+            const objDate = new Date(year, m, d); // Local time 00:00:00
+
+            eventMap[dateStr] = { type: group.type, title: group.title };
+            flatEvents.push({
+                dateStr: dateStr,
+                fullDate: `${year}-${dateStr}`,
+                type: group.type,
+                title: group.title,
+                objDate: objDate
+            });
+        });
+    });
+
+    // 排序所有事件
+    flatEvents.sort((a, b) => a.objDate - b.objDate);
+
+    // 狀態管理
+    let activeFilters = new Set(['A', 'B', 'C', 'D', 'E']);
+    let isGridView = true;
+
+    // --- 渲染功能 ---
+    function renderCalendar() {
+        // 1. Render Grid
+        const grid = document.getElementById('calendar-grid');
+        grid.innerHTML = '';
+        const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+
+        for (let m = 0; m < 12; m++) {
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'month-card';
+
+            const title = document.createElement('div');
+            title.className = 'month-title';
+            title.textContent = monthNames[m];
+            monthDiv.appendChild(title);
+
+            const weekHeader = document.createElement('div');
+            weekHeader.className = 'days-header';
+            ['日', '一', '二', '三', '四', '五', '六'].forEach(d => {
+                const el = document.createElement('div'); el.textContent = d; weekHeader.appendChild(el);
+            });
+            monthDiv.appendChild(weekHeader);
+
+            const dayGrid = document.createElement('div');
+            dayGrid.className = 'days-grid';
+            const firstDayIndex = new Date(year, m, 1).getDay();
+            const daysInMonth = new Date(year, m + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) dayGrid.appendChild(document.createElement('div'));
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day-cell';
+                dayEl.textContent = d;
+                const dateKey = `${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                
+                if (eventMap[dateKey]) {
+                    const type = eventMap[dateKey].type;
+                    if (activeFilters.has(type)) {
+                        dayEl.classList.add('has-event', `evt-${type}`);
+                        dayEl.title = eventMap[dateKey].title;
+                    } else {
+                        dayEl.classList.add('dimmed');
+                    }
+                }
+                dayGrid.appendChild(dayEl);
+            }
+            monthDiv.appendChild(dayGrid);
+            grid.appendChild(monthDiv);
+        }
+
+        // 2. Render List
+        const listContainer = document.getElementById('agenda-list');
+        listContainer.innerHTML = '';
+        
+        flatEvents.forEach(evt => {
+            if (!activeFilters.has(evt.type)) return;
+
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            
+            const dateSpan = document.createElement('div');
+            dateSpan.className = 'list-date';
+            dateSpan.textContent = evt.dateStr.replace('-', '/');
+            
+            const tagSpan = document.createElement('div');
+            tagSpan.className = `list-tag evt-${evt.type}`;
+            tagSpan.textContent = evt.type;
+            
+            const titleSpan = document.createElement('div');
+            titleSpan.className = 'list-title';
+            titleSpan.textContent = evt.title;
+            
+            item.appendChild(dateSpan);
+            item.appendChild(tagSpan);
+            item.appendChild(titleSpan);
+            listContainer.appendChild(item);
+        });
+
+        updateNextEvent();
+    }
+
+    // --- 功能邏輯 ---
+
+    function toggleFilter(type) {
+        if (activeFilters.has(type)) {
+            activeFilters.delete(type);
+            document.querySelector(`.filter-btn[onclick="toggleFilter('${type}')"]`).classList.remove('active');
+        } else {
+            activeFilters.add(type);
+            document.querySelector(`.filter-btn[onclick="toggleFilter('${type}')"]`).classList.add('active');
+        }
+        renderCalendar();
+    }
+
+    function toggleView() {
+        isGridView = !isGridView;
+        const grid = document.getElementById('calendar-grid');
+        const list = document.getElementById('agenda-list');
+        const btn = document.getElementById('view-toggle-btn');
+
+        if (isGridView) {
+            grid.classList.add('active');
+            list.classList.remove('active');
+            btn.textContent = '📋 切換列表模式';
+        } else {
+            grid.classList.remove('active');
+            list.classList.add('active');
+            btn.textContent = '📅 切換月曆模式';
+        }
+    }
+
+    function updateNextEvent() {
+        const now = new Date(); 
+        now.setHours(0, 0, 0, 0);
+
+        const nextEvt = flatEvents.find(e => e.objDate >= now && activeFilters.has(e.type));
+        
+        const display = document.getElementById('next-event-display');
+        if (nextEvt) {
+            const diffTime = nextEvt.objDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            display.innerHTML = `📅 下一個課程：<span class="next-event-highlight">${nextEvt.dateStr.replace('-','/')} ${nextEvt.title}</span> (還有 ${diffDays} 天)`;
+        } else {
+            if (now.getFullYear() >= 2026) {
+                display.innerHTML = "🎉 2026 所有課程已結束";
+            } else {
+                display.innerHTML = "目前篩選條件下無未來的課程";
+            }
+        }
+    }
+
+    function changeTheme(themeName) {
+        document.body.className = `theme-${themeName}`;
+    }
+
+    // --- ICS Export ---
+    function exportICS() {
+        // Show TimeTree Help
+        alert("【TimeTree 匯入教學】\n\n1. 點擊「確定」後會下載一個 .ics 檔案。\n2. 請在手機上打開該檔案。\n3. 選擇「加入到行事曆」(iPhone/Google Calendar)。\n4. 打開 TimeTree App，在設定中開啟「匯入/同步 OS 行事曆」即可！");
+
+        let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Taier//Course Calendar//TW\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
+        
+        flatEvents.forEach(evt => {
+            if (!activeFilters.has(evt.type)) return;
+            
+            // Format date to YYYYMMDD
+            const d = evt.dateStr.replace('-', '');
+            const dateString = `2026${d}`;
+            
+            icsContent += "BEGIN:VEVENT\n";
+            icsContent += `DTSTART;VALUE=DATE:${dateString}\n`;
+            icsContent += `DTEND;VALUE=DATE:${dateString}\n`; 
+            icsContent += `SUMMARY:台兒課程-${evt.title}\n`;
+            icsContent += `DESCRIPTION:分類: ${evt.type}\n`;
+            icsContent += "END:VEVENT\n";
+        });
+        
+        icsContent += "END:VCALENDAR";
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', '2026_Taier_Courses.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // --- PDF Download ---
+    function downloadPDF() {
+        const originalContainer = document.getElementById('calendar-container');
+        const ghostWrapper = document.getElementById('pdf-ghost-wrapper');
+        const btn = document.querySelector('button.btn-primary');
+        const originalText = btn.textContent;
+        
+        btn.textContent = '處理中...';
+        btn.disabled = true;
+
+        const ghostContainer = originalContainer.cloneNode(true);
+        ghostContainer.classList.add('ghost-content');
+        ghostContainer.id = "";
+        ghostWrapper.innerHTML = "";
+        ghostWrapper.appendChild(ghostContainer);
+        
+        html2canvas(ghostContainer, {
+            scale: 2,
+            useCORS: true,
+            windowWidth: 1600,
+        }).then(canvas => {
+            ghostWrapper.innerHTML = "";
+            btn.textContent = originalText;
+            btn.disabled = false;
+
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const pdfPageWidth = 210;
+            const pdfPageHeight = 297;
+            const margin = 10;
+            const printableWidth = pdfPageWidth - (margin * 2);
+            const printableHeight = pdfPageHeight - (margin * 2);
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratioW = printableWidth / imgWidth;
+            const ratioH = printableHeight / imgHeight;
+            const finalRatio = Math.min(ratioW, ratioH);
+            const finalWidth = imgWidth * finalRatio;
+            const finalHeight = imgHeight * finalRatio;
+            const x = (pdfPageWidth - finalWidth) / 2;
+            const y = (pdfPageHeight - finalHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+            pdf.save(`2026_Taier_Academic_Calendar.pdf`);
+        });
+    }
+
+    renderCalendar();
+</script>
+
+</body>
+</html>
